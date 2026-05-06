@@ -78,17 +78,6 @@
       "km": null
     },
     {
-      "id": "1778090036426",
-      "date": "2026-05-08",
-      "station": "Migrolino Wynau",
-      "type": "DC",
-      "kwh": 3.8,
-      "cost": 2.25,
-      "socStart": null,
-      "socEnd": null,
-      "km": null
-    },
-    {
       "id": "1778089743664",
       "date": "2026-05-01",
       "station": "Flyer Huttwil",
