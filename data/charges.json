@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "1778090256058",
+      "date": "2026-05-29",
+      "station": "GoFast Aarberg",
+      "type": "DC",
+      "kwh": 21,
+      "cost": 14.65,
+      "socStart": null,
+      "socEnd": null,
+      "km": null
+    },
+    {
       "id": "1778090233153",
       "date": "2026-05-29",
       "station": "Sagibach",
