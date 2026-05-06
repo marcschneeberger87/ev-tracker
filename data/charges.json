@@ -1,17 +1,6 @@
 {
   "entries": [
     {
-      "id": "1778090233153",
-      "date": "2026-05-29",
-      "station": "Sagibach",
-      "type": "AC",
-      "kwh": 18.9,
-      "cost": 9.35,
-      "socStart": null,
-      "socEnd": null,
-      "km": null
-    },
-    {
       "id": "1778090212500",
       "date": "2026-05-28",
       "station": "Sagibach",
