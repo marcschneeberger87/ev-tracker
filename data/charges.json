@@ -100,6 +100,17 @@
       "km": null
     },
     {
+      "id": "1778089981856",
+      "date": "2026-03-02",
+      "station": "Migros Langenthal",
+      "type": "DC",
+      "kwh": 16.3,
+      "cost": 7.8,
+      "socStart": null,
+      "socEnd": null,
+      "km": null
+    },
+    {
       "id": "1778089960279",
       "date": "2026-03-01",
       "station": "Sagibach",
