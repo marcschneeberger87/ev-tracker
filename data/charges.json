@@ -98,6 +98,17 @@
       "socStart": null,
       "socEnd": null,
       "km": null
+    },
+    {
+      "id": "1778089960279",
+      "date": "2026-03-01",
+      "station": "Sagibach",
+      "type": "AC",
+      "kwh": 10.9,
+      "cost": 5.4,
+      "socStart": null,
+      "socEnd": null,
+      "km": null
     }
   ]
 }
