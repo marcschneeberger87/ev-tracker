@@ -144,6 +144,17 @@
       "km": null
     },
     {
+      "id": "1778090462849",
+      "date": "2026-03-08",
+      "station": "Migrolino Wynau",
+      "type": "DC",
+      "kwh": 3.8,
+      "cost": 2.25,
+      "socStart": null,
+      "socEnd": null,
+      "km": null
+    },
+    {
       "id": "1778090005301",
       "date": "2026-03-06",
       "station": "Sagibach",
