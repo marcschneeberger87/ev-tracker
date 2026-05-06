@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "1778090079972",
+      "date": "2026-05-13",
+      "station": "Migros Langenthal",
+      "type": "DC",
+      "kwh": 9.1,
+      "cost": 4.4,
+      "socStart": null,
+      "socEnd": null,
+      "km": null
+    },
+    {
       "id": "1778090036426",
       "date": "2026-05-08",
       "station": "Migrolino Wynau",
