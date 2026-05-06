@@ -7,319 +7,178 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="EV Tracker">
 <meta name="theme-color" content="#F2F2F7">
-<meta name="description" content="EV Ladetracker – Opel eFrontera Ladedaten erfassen und auswerten">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>EV Ladetracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-/* ─── Reset & Base ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
 :root {
-  --blue:    #007AFF;
-  --green:   #34C759;
-  --orange:  #FF9500;
-  --red:     #FF3B30;
-  --gray:    #8E8E93;
-  --gray2:   #AEAEB2;
-  --gray5:   #E5E5EA;
-  --bg:      #F2F2F7;
-  --card:    #FFFFFF;
-  --text:    #000000;
-  --text2:   rgba(60,60,67,0.75);
-  --text3:   rgba(60,60,67,0.55);
-  --sep:     rgba(60,60,67,0.15);
-  --radius:  12px;
-  --tab-h:   56px;
-  --safe-b:  env(safe-area-inset-bottom, 0px);
+  --blue: #007AFF; --green: #34C759; --orange: #FF9500; --red: #FF3B30;
+  --gray: #8E8E93; --gray2: #AEAEB2; --gray5: #E5E5EA;
+  --bg: #F2F2F7; --card: #FFFFFF; --text: #000;
+  --text2: rgba(60,60,67,0.75); --text3: rgba(60,60,67,0.55); --sep: rgba(60,60,67,0.15);
+  --radius: 12px; --tab-h: 56px;
+  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
 }
-
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg:    #000000;
-    --card:  #1C1C1E;
-    --text:  #FFFFFF;
-    --text2: rgba(235,235,245,0.75);
-    --text3: rgba(235,235,245,0.45);
-    --sep:   rgba(255,255,255,0.1);
-    --gray5: #2C2C2E;
-  }
+  :root { --bg:#000; --card:#1C1C1E; --text:#fff; --text2:rgba(235,235,245,0.75); --text3:rgba(235,235,245,0.45); --sep:rgba(255,255,255,0.1); --gray5:#2C2C2E; }
   .tab-bar { background: rgba(28,28,30,0.94) !important; }
-  .nav-header { background: var(--bg) !important; }
-  .badge-ac { background: rgba(52,199,89,0.18) !important; color: #30D158 !important; }
-  .badge-dc { background: rgba(0,122,255,0.18) !important; color: #4EA8FF !important; }
-  .mc.hl { background: #0A84FF !important; }
+  .badge-ac { background:rgba(52,199,89,0.18)!important; color:#30D158!important; }
+  .badge-dc { background:rgba(0,122,255,0.18)!important; color:#4EA8FF!important; }
+  .mc.hl { background:#0A84FF!important; }
+  .soc-bg { background:rgba(255,255,255,0.12)!important; }
 }
+html,body { height:100%; width:100%; background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-system,'Helvetica Neue',sans-serif; overflow:hidden; -webkit-font-smoothing:antialiased; }
+#app { height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
 
-html, body {
-  height: 100%; width: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Sans', -apple-system, 'Helvetica Neue', sans-serif;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+.screen { display:none; flex-direction:column; flex:1; overflow:hidden; }
+.screen.active { display:flex; }
 
-/* ─── App Shell ─── */
-#app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+.nav-header { background:var(--bg); padding:calc(var(--safe-t) + 8px) 20px 10px; border-bottom:0.5px solid var(--sep); flex-shrink:0; position:relative; }
+.nav-large { font-size:28px; font-weight:700; letter-spacing:-0.5px; }
+.nav-sub { font-size:13px; color:var(--text3); margin-top:2px; display:flex; align-items:center; gap:6px; }
+.sync-dot { width:7px; height:7px; border-radius:50%; background:var(--gray2); flex-shrink:0; transition:background 0.3s; }
+.sync-dot.ok { background:var(--green); }
+.sync-dot.err { background:var(--red); }
+.sync-dot.spin { background:var(--orange); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.nav-btn-r { position:absolute; right:16px; top:calc(var(--safe-t)+10px); background:var(--blue); border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:20px; }
+.nav-btn-l { position:absolute; left:16px; top:calc(var(--safe-t)+13px); background:none; border:none; cursor:pointer; color:var(--red); display:flex; align-items:center; }
 
-/* ─── Screens ─── */
-.screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-.screen.active { display: flex; }
+.scroll-area { flex:1; overflow-y:auto; padding:16px; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:calc(var(--tab-h) + var(--safe-b) + 20px); }
+.scroll-area::-webkit-scrollbar { display:none; }
 
-/* ─── Navigation Header ─── */
-.nav-header {
-  background: var(--bg);
-  padding: calc(env(safe-area-inset-top, 12px) + 8px) 20px 10px;
-  border-bottom: 0.5px solid var(--sep);
-  flex-shrink: 0;
-  position: relative;
-}
-.nav-large { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.1; }
-.nav-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
-.nav-action-r {
-  position: absolute; right: 16px;
-  top: calc(env(safe-area-inset-top, 12px) + 10px);
-  background: var(--blue); border: none; border-radius: 50%;
-  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: #fff; font-size: 20px; line-height: 1;
-}
-.nav-action-l {
-  position: absolute; left: 16px;
-  top: calc(env(safe-area-inset-top, 12px) + 13px);
-  background: none; border: none; cursor: pointer;
-  color: var(--red); font-size: 17px; display: flex; align-items: center;
-}
+.sec { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.7px; margin-bottom:8px; padding-left:2px; }
+.card { background:var(--card); border-radius:var(--radius); overflow:hidden; margin-bottom:16px; }
 
-/* ─── Scroll Area ─── */
-.scroll-area {
-  flex: 1; overflow-y: auto; padding: 16px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: calc(var(--tab-h) + var(--safe-b) + 16px);
-}
-.scroll-area::-webkit-scrollbar { display: none; }
+.metrics { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.mc { background:var(--card); border-radius:var(--radius); padding:13px 14px; }
+.mc.hl { background:var(--blue); }
+.mc-lbl { font-size:11px; color:var(--text3); margin-bottom:3px; font-weight:500; }
+.mc.hl .mc-lbl { color:rgba(255,255,255,0.72); }
+.mc-val { font-size:21px; font-weight:700; letter-spacing:-0.5px; line-height:1.15; }
+.mc.hl .mc-val { color:#fff; }
+.mc-unit { font-size:11px; font-weight:400; color:var(--text3); }
+.mc.hl .mc-unit { color:rgba(255,255,255,0.65); }
+.mc-sub { font-size:10.5px; color:var(--text3); margin-top:3px; }
+.mc.hl .mc-sub { color:rgba(255,255,255,0.62); }
 
-/* ─── Section Header ─── */
-.sec {
-  font-size: 11px; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: 0.7px;
-  margin-bottom: 8px; padding-left: 2px;
-}
+.chart-wrap { padding:14px 14px 16px; }
+.chart-canvas { height:140px !important; }
 
-/* ─── Cards ─── */
-.card { background: var(--card); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+.crow { display:flex; align-items:flex-start; gap:12px; padding:12px 14px; border-bottom:0.5px solid var(--sep); }
+.crow:last-child { border-bottom:none; }
+.crow-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; margin-top:1px; }
+.crow-icon.ac { background:rgba(52,199,89,0.13); }
+.crow-icon.dc { background:rgba(0,122,255,0.12); }
+.crow-info { flex:1; min-width:0; }
+.crow-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.crow-meta { font-size:11px; color:var(--text3); margin-top:2px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.crow-right { text-align:right; flex-shrink:0; }
+.crow-chf { font-size:14px; font-weight:600; }
+.crow-kwh { font-size:11px; color:var(--text3); margin-top:1px; }
+.crow-km { font-size:10px; color:var(--text3); margin-top:1px; }
+.badge { font-size:9px; font-weight:700; padding:2px 5px; border-radius:4px; }
+.badge-ac { background:rgba(52,199,89,0.13); color:#1a7a32; }
+.badge-dc { background:rgba(0,122,255,0.12); color:#0055cc; }
+.soc { display:flex; align-items:center; gap:5px; margin-top:5px; }
+.soc-n { font-size:10px; color:var(--text3); width:26px; flex-shrink:0; }
+.soc-n.r { text-align:right; }
+.soc-bg { flex:1; height:4px; background:rgba(0,0,0,0.08); border-radius:2px; overflow:hidden; }
+.soc-fill { height:100%; background:var(--green); border-radius:2px; }
 
-/* ─── Metric Grid ─── */
-.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-.mc { background: var(--card); border-radius: var(--radius); padding: 13px 14px; }
-.mc.hl { background: var(--blue); }
-.mc-lbl { font-size: 11px; color: var(--text3); margin-bottom: 3px; font-weight: 500; }
-.mc.hl .mc-lbl { color: rgba(255,255,255,0.72); }
-.mc-val { font-size: 21px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.15; }
-.mc.hl .mc-val { color: #fff; }
-.mc-unit { font-size: 11px; font-weight: 400; color: var(--text3); }
-.mc.hl .mc-unit { color: rgba(255,255,255,0.65); }
-.mc-sub { font-size: 10.5px; color: var(--text3); margin-top: 3px; line-height: 1.3; }
-.mc.hl .mc-sub { color: rgba(255,255,255,0.62); }
+.month-hdr { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; padding:4px 2px 8px; display:flex; justify-content:space-between; }
 
-/* ─── Chart ─── */
-.chart-wrap { padding: 14px 14px 16px; }
-.chart-canvas { height: 140px !important; }
+.cons-box { background:rgba(255,149,0,0.09); border-radius:10px; padding:16px; display:flex; align-items:center; }
+.cons-big { font-size:40px; font-weight:700; color:var(--orange); letter-spacing:-1.5px; line-height:1; }
+.cons-lbl { font-size:12px; color:var(--text3); margin-top:3px; }
+.stat-row { display:flex; align-items:center; padding:12px 14px; border-bottom:0.5px solid var(--sep); }
+.stat-row:last-child { border-bottom:none; }
+.stat-name { font-size:14px; font-weight:500; }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+.stat-chf { font-size:14px; font-weight:600; flex-shrink:0; margin-left:8px; }
 
-/* ─── Charge Rows ─── */
-.crow {
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 12px 14px; border-bottom: 0.5px solid var(--sep);
-}
-.crow:last-child { border-bottom: none; }
-.crow-icon {
-  width: 36px; height: 36px; border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; flex-shrink: 0; margin-top: 1px;
-}
-.crow-icon.ac { background: rgba(52,199,89,0.13); }
-.crow-icon.dc { background: rgba(0,122,255,0.12); }
-.crow-info { flex: 1; min-width: 0; }
-.crow-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.crow-meta { font-size: 11px; color: var(--text3); margin-top: 2px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-.crow-right { text-align: right; flex-shrink: 0; }
-.crow-chf { font-size: 14px; font-weight: 600; }
-.crow-kwh { font-size: 11px; color: var(--text3); margin-top: 1px; }
-.crow-km { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.empty { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 24px; text-align:center; gap:10px; }
+.empty-icon { font-size:52px; opacity:0.3; }
+.empty-title { font-size:18px; font-weight:600; color:var(--text2); }
+.empty-sub { font-size:14px; color:var(--text3); line-height:1.5; }
+.empty-btn { margin-top:8px; background:var(--blue); color:#fff; border:none; border-radius:24px; padding:11px 24px; font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; }
 
-/* Badge */
-.badge { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; }
-.badge-ac { background: rgba(52,199,89,0.13); color: #1a7a32; }
-.badge-dc { background: rgba(0,122,255,0.12); color: #0055cc; }
-.badge-tarif { font-size: 9.5px; color: var(--text3); }
+.sheet-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; display:none; align-items:flex-end; backdrop-filter:blur(4px); }
+.sheet-overlay.open { display:flex; }
+.sheet { background:var(--bg); border-radius:18px 18px 0 0; width:100%; max-height:92dvh; overflow-y:auto; padding-bottom:calc(var(--safe-b)+8px); animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1); }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.sheet-handle { width:36px; height:4px; background:var(--gray2); border-radius:2px; margin:10px auto 0; }
+.sheet-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 8px; }
+.sheet-title { font-size:17px; font-weight:600; }
+.sheet-btn { font-size:15px; color:var(--blue); background:none; border:none; cursor:pointer; font-family:inherit; padding:4px; }
+.sheet-btn.save { font-weight:700; }
+.sheet-btn.cancel { color:var(--text3); }
 
-/* SoC bar */
-.soc { display: flex; align-items: center; gap: 5px; margin-top: 5px; }
-.soc-n { font-size: 10px; color: var(--text3); width: 26px; flex-shrink: 0; }
-.soc-n.r { text-align: right; }
-.soc-bg { flex: 1; height: 4px; background: rgba(0,0,0,0.08); border-radius: 2px; overflow: hidden; }
-@media (prefers-color-scheme: dark) { .soc-bg { background: rgba(255,255,255,0.12); } }
-.soc-fill { height: 100%; background: var(--green); border-radius: 2px; }
+.form-sec { padding:0 16px 20px; }
+.form-lbl-sec { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px; padding-left:2px; }
+.form-card { background:var(--card); border-radius:var(--radius); overflow:hidden; }
+.form-row { display:flex; align-items:flex-start; padding:11px 14px; border-bottom:0.5px solid var(--sep); gap:10px; }
+.form-row:last-child { border-bottom:none; }
+.form-row-lbl { font-size:15px; color:var(--text); flex:1; padding-top:2px; }
+.form-input { background:none; border:none; outline:none; font-size:15px; color:var(--text); text-align:right; font-family:inherit; width:150px; flex-shrink:0; }
+.form-input::placeholder { color:var(--text3); }
+.form-input.blue { color:var(--blue); font-weight:500; }
+.form-hint { font-size:10.5px; color:var(--green); text-align:right; margin-top:2px; }
+.form-footer { font-size:11.5px; color:var(--text3); padding:6px 4px 0; line-height:1.4; }
+.form-save-btn { display:block; width:calc(100% - 32px); margin:4px 16px 12px; background:var(--blue); color:#fff; border:none; border-radius:var(--radius); padding:14px; font-size:16px; font-weight:600; font-family:inherit; cursor:pointer; }
+.form-save-btn:disabled { opacity:0.4; }
 
-/* ─── Month header ─── */
-.month-hdr {
-  font-size: 11px; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: 0.5px;
-  padding: 4px 2px 8px; display: flex; justify-content: space-between;
-}
+.settings-row { display:flex; align-items:flex-start; padding:13px 16px; border-bottom:0.5px solid var(--sep); gap:10px; }
+.settings-row:last-child { border-bottom:none; }
+.settings-lbl { font-size:15px; flex:1; }
+.settings-val { font-size:14px; color:var(--blue); text-align:right; font-family:'SF Mono',monospace; flex:1; background:none; border:none; outline:none; font-family:inherit; }
+.settings-val::placeholder { color:var(--text3); }
+.info-box { margin:0 0 16px; background:rgba(0,122,255,0.08); border-radius:10px; padding:12px 14px; font-size:13px; color:var(--text2); line-height:1.5; }
+.settings-save-btn { display:block; width:100%; margin-bottom:10px; background:var(--blue); color:#fff; border:none; border-radius:var(--radius); padding:13px; font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; }
+.settings-sync-btn { display:block; width:100%; margin-bottom:10px; background:var(--card); color:var(--blue); border:1.5px solid var(--blue); border-radius:var(--radius); padding:13px; font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; }
+.cfg-status { font-size:12px; color:var(--text3); padding:4px 2px 12px; min-height:20px; }
 
-/* ─── Stats ─── */
-.cons-box {
-  background: rgba(255,149,0,0.09); border-radius: 10px;
-  padding: 16px; display: flex; align-items: center;
-  margin: 0 0 0; gap: 0;
-}
-.cons-big { font-size: 40px; font-weight: 700; color: var(--orange); letter-spacing: -1.5px; line-height: 1; }
-.cons-lbl { font-size: 12px; color: var(--text3); margin-top: 3px; }
-.stat-row { display: flex; align-items: center; padding: 12px 14px; border-bottom: 0.5px solid var(--sep); }
-.stat-row:last-child { border-bottom: none; }
-.stat-name { font-size: 14px; font-weight: 500; }
-.stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.stat-chf { font-size: 14px; font-weight: 600; flex-shrink: 0; margin-left: 8px; }
+.confirm-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:300; display:none; align-items:center; justify-content:center; padding:24px; }
+.confirm-overlay.open { display:flex; }
+.confirm-box { background:var(--card); border-radius:14px; padding:20px; max-width:320px; width:100%; text-align:center; }
+.confirm-title { font-size:17px; font-weight:600; margin-bottom:8px; }
+.confirm-msg { font-size:13px; color:var(--text3); margin-bottom:20px; line-height:1.5; }
+.confirm-btns { display:flex; flex-direction:column; gap:8px; }
+.confirm-btn { border:none; border-radius:10px; padding:12px; font-size:15px; font-weight:500; font-family:inherit; cursor:pointer; }
+.confirm-btn.del { background:var(--red); color:#fff; font-weight:600; }
+.confirm-btn.cancel { background:var(--gray5); color:var(--text); }
 
-/* ─── Empty State ─── */
-.empty {
-  display: flex; flex-direction: column; align-items: center;
-  justify-content: center; padding: 60px 24px; text-align: center; gap: 10px;
-}
-.empty-icon { font-size: 52px; opacity: 0.3; }
-.empty-title { font-size: 18px; font-weight: 600; color: var(--text2); }
-.empty-sub { font-size: 14px; color: var(--text3); line-height: 1.5; }
-.empty-btn {
-  margin-top: 8px; background: var(--blue); color: #fff;
-  border: none; border-radius: 24px; padding: 11px 24px;
-  font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
-}
+.tab-bar { display:flex; flex-shrink:0; background:rgba(242,242,247,0.94); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:0.5px solid var(--sep); height:calc(var(--tab-h) + var(--safe-b)); padding-bottom:var(--safe-b); }
+.tab { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; padding-top:6px; }
+.tab-icon { font-size:22px; line-height:1; }
+.tab-lbl { font-size:10px; font-weight:500; color:var(--gray); }
+.tab.on .tab-lbl { color:var(--blue); }
 
-/* ─── Form Sheet ─── */
-.sheet-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-  z-index: 200; display: none; align-items: flex-end;
-  backdrop-filter: blur(4px);
-}
-.sheet-overlay.open { display: flex; }
-.sheet {
-  background: var(--bg); border-radius: 18px 18px 0 0;
-  width: 100%; max-height: 92dvh; overflow-y: auto;
-  padding-bottom: calc(var(--safe-b) + 8px);
-  animation: slideUp 0.3s cubic-bezier(0.32,0.72,0,1);
-}
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.toast { position:fixed; bottom:calc(var(--tab-h) + var(--safe-b) + 14px); left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.78); color:#fff; padding:9px 18px; border-radius:20px; font-size:13px; font-weight:500; z-index:500; opacity:0; transition:opacity 0.2s; white-space:nowrap; pointer-events:none; }
+.toast.show { opacity:1; }
 
-.sheet-handle { width: 36px; height: 4px; background: var(--gray2); border-radius: 2px; margin: 10px auto 0; }
-.sheet-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px 8px;
-}
-.sheet-title { font-size: 17px; font-weight: 600; }
-.sheet-btn { font-size: 15px; color: var(--blue); background: none; border: none; cursor: pointer; font-family: inherit; padding: 4px; }
-.sheet-btn.save { font-weight: 700; }
-.sheet-btn.cancel { color: var(--text3); }
-
-.form-sec { padding: 0 16px 20px; }
-.form-lbl-sec { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; padding-left: 2px; }
-.form-card { background: var(--card); border-radius: var(--radius); overflow: hidden; }
-.form-row { display: flex; align-items: flex-start; padding: 11px 14px; border-bottom: 0.5px solid var(--sep); gap: 10px; }
-.form-row:last-child { border-bottom: none; }
-.form-row-lbl { font-size: 15px; color: var(--text); flex: 1; padding-top: 2px; }
-.form-input {
-  background: none; border: none; outline: none;
-  font-size: 15px; color: var(--text); text-align: right;
-  font-family: inherit; width: 140px; flex-shrink: 0;
-}
-.form-input::placeholder { color: var(--text3); }
-.form-input.blue { color: var(--blue); font-weight: 500; }
-select.form-input { -webkit-appearance: none; cursor: pointer; }
-.form-hint { font-size: 10.5px; color: var(--green); text-align: right; margin-top: 2px; }
-.form-footer { font-size: 11.5px; color: var(--text3); padding: 6px 4px 0; line-height: 1.4; }
-.form-save-btn {
-  display: block; width: calc(100% - 32px); margin: 4px 16px 12px;
-  background: var(--blue); color: #fff; border: none; border-radius: var(--radius);
-  padding: 14px; font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer;
-}
-.form-save-btn:disabled { opacity: 0.45; }
-
-/* ─── Delete confirmation ─── */
-.confirm-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-  z-index: 300; display: none; align-items: center; justify-content: center;
-  padding: 24px;
-}
-.confirm-overlay.open { display: flex; }
-.confirm-box {
-  background: var(--card); border-radius: 14px; padding: 20px;
-  max-width: 320px; width: 100%; text-align: center;
-}
-.confirm-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
-.confirm-msg { font-size: 13px; color: var(--text3); margin-bottom: 20px; line-height: 1.5; }
-.confirm-btns { display: flex; flex-direction: column; gap: 8px; }
-.confirm-btn {
-  border: none; border-radius: 10px; padding: 12px;
-  font-size: 15px; font-weight: 500; font-family: inherit; cursor: pointer;
-}
-.confirm-btn.del { background: var(--red); color: #fff; font-weight: 600; }
-.confirm-btn.cancel { background: var(--gray5); color: var(--text); }
-
-/* ─── Tab Bar ─── */
-.tab-bar {
-  display: flex; flex-shrink: 0;
-  background: rgba(242,242,247,0.94);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border-top: 0.5px solid var(--sep);
-  height: calc(var(--tab-h) + var(--safe-b));
-  padding-bottom: var(--safe-b);
-}
-.tab {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 3px;
-  cursor: pointer; padding-top: 6px;
-}
-.tab-icon { font-size: 22px; line-height: 1; }
-.tab-lbl { font-size: 10px; font-weight: 500; color: var(--gray); }
-.tab.on .tab-lbl { color: var(--blue); }
-
-/* ─── Toast ─── */
-.toast {
-  position: fixed; bottom: calc(var(--tab-h) + var(--safe-b) + 12px);
-  left: 50%; transform: translateX(-50%);
-  background: rgba(0,0,0,0.78); color: #fff;
-  padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 500;
-  z-index: 500; opacity: 0; transition: opacity 0.2s;
-  white-space: nowrap; pointer-events: none;
-}
-.toast.show { opacity: 1; }
-
-/* ─── Install Banner ─── */
-.install-banner {
-  background: var(--blue); color: #fff;
-  padding: 10px 16px; display: flex; align-items: center; gap: 10px;
-  font-size: 13px; cursor: pointer; flex-shrink: 0;
-}
-.install-banner button { background: rgba(255,255,255,0.25); border: none; border-radius: 6px; padding: 5px 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: auto; }
+.spinner-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:400; display:none; align-items:center; justify-content:center; }
+.spinner-overlay.open { display:flex; }
+.spinner-box { background:var(--card); border-radius:16px; padding:24px 32px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px; }
+.spinner { width:32px; height:32px; border:3px solid var(--gray5); border-top-color:var(--blue); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.spinner-msg { font-size:14px; font-weight:500; color:var(--text2); }
 </style>
 </head>
 <body>
-
 <div id="app">
 
   <!-- HOME -->
   <div class="screen active" id="s-home">
-    <div class="nav-header" id="home-header">
-      <button class="nav-action-l" id="btn-delete-all" onclick="confirmDeleteAll()" title="Alle löschen" style="display:none">
+    <div class="nav-header">
+      <button class="nav-btn-l" id="btn-del-all" onclick="confirmDeleteAll()" style="display:none">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
       </button>
       <div class="nav-large">EV Ladetracker</div>
-      <div class="nav-sub">Opel eFrontera</div>
-      <button class="nav-action-r" onclick="openSheet()" title="Neuer Eintrag">+</button>
+      <div class="nav-sub"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Opel eFrontera</span></div>
+      <button class="nav-btn-r" onclick="openSheet()">+</button>
     </div>
     <div class="scroll-area" id="home-body"></div>
   </div>
@@ -336,18 +195,52 @@ select.form-input { -webkit-appearance: none; cursor: pointer; }
     <div class="scroll-area" id="stats-body"></div>
   </div>
 
-  <!-- TAB BAR -->
+  <!-- EINSTELLUNGEN -->
+  <div class="screen" id="s-settings">
+    <div class="nav-header"><div class="nav-large">Einstellungen</div></div>
+    <div class="scroll-area">
+      <div class="info-box">ℹ️ Deine Daten werden als JSON-Datei in deinem GitHub Repository gespeichert und sind auf jedem Gerät und Browser verfügbar. Der Token wird nur lokal in diesem Browser gespeichert – er verlässt dein Gerät nicht.</div>
+      <div class="sec">GitHub Konfiguration</div>
+      <div class="card" style="margin-bottom:6px">
+        <div class="settings-row"><span class="settings-lbl">Benutzername</span><input class="settings-val" id="cfg-user" placeholder="marcschneeberger87"></div>
+        <div class="settings-row"><span class="settings-lbl">Repository</span><input class="settings-val" id="cfg-repo" placeholder="ev-tracker"></div>
+        <div class="settings-row"><span class="settings-lbl">Branch</span><input class="settings-val" id="cfg-branch" placeholder="main"></div>
+        <div class="settings-row" style="flex-direction:column;gap:6px">
+          <span class="settings-lbl">Personal Access Token</span>
+          <input class="settings-val" id="cfg-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="text-align:left;width:100%;font-size:13px;font-family:monospace">
+        </div>
+      </div>
+      <div class="cfg-status" id="cfg-status"></div>
+      <button class="settings-save-btn" onclick="saveConfig()">💾 Konfiguration speichern & sync</button>
+      <button class="settings-sync-btn" onclick="syncNow()">🔄 Jetzt synchronisieren</button>
+
+      <div class="sec" style="margin-top:8px">Datenspeicherung</div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="settings-row"><span class="settings-lbl">Datei im Repo</span><span style="font-size:12px;color:var(--text3);font-family:monospace">data/charges.json</span></div>
+        <div class="settings-row"><span class="settings-lbl">Token-Speicher</span><span style="font-size:12px;color:var(--text3)">Nur lokal (localStorage)</span></div>
+      </div>
+
+      <div class="sec">Gefährliche Zone</div>
+      <div class="card">
+        <div class="settings-row" style="cursor:pointer" onclick="confirmDeleteAll()">
+          <span class="settings-lbl" style="color:var(--red)">Alle Daten löschen</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="tab-bar">
     <div class="tab on" onclick="showTab('home',this)"><div class="tab-icon">⚡</div><div class="tab-lbl">Übersicht</div></div>
     <div class="tab" onclick="showTab('history',this)"><div class="tab-icon">📋</div><div class="tab-lbl">Verlauf</div></div>
     <div class="tab" onclick="showTab('stats',this)"><div class="tab-icon">📊</div><div class="tab-lbl">Statistik</div></div>
+    <div class="tab" onclick="showTab('settings',this)"><div class="tab-icon">⚙️</div><div class="tab-lbl">Einstellungen</div></div>
   </div>
-
 </div>
 
 <!-- ADD SHEET -->
 <div class="sheet-overlay" id="sheet" onclick="closeSheetOutside(event)">
-  <div class="sheet" id="sheet-inner">
+  <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <button class="sheet-btn cancel" onclick="closeSheet()">Abbrechen</button>
@@ -357,39 +250,18 @@ select.form-input { -webkit-appearance: none; cursor: pointer; }
     <div class="form-sec">
       <div class="form-lbl-sec">Allgemein</div>
       <div class="form-card">
-        <div class="form-row">
-          <span class="form-row-lbl">Datum</span>
-          <input class="form-input" type="date" id="f-date">
-        </div>
-        <div class="form-row">
-          <span class="form-row-lbl">Anbieter</span>
-          <input class="form-input" type="text" id="f-station" placeholder="z.B. M-Charge Bern" autocomplete="off">
-        </div>
-        <div class="form-row">
-          <span class="form-row-lbl">Ladetyp</span>
-          <select class="form-input" id="f-type">
-            <option value="AC">AC (langsam)</option>
-            <option value="DC">DC (schnell)</option>
-          </select>
-        </div>
+        <div class="form-row"><span class="form-row-lbl">Datum</span><input class="form-input" type="date" id="f-date"></div>
+        <div class="form-row"><span class="form-row-lbl">Anbieter</span><input class="form-input" type="text" id="f-station" placeholder="z.B. M-Charge Bern" autocomplete="off" list="station-list"><datalist id="station-list"></datalist></div>
+        <div class="form-row"><span class="form-row-lbl">Ladetyp</span><select class="form-input" id="f-type"><option value="AC">AC (langsam)</option><option value="DC">DC (schnell)</option></select></div>
       </div>
     </div>
     <div class="form-sec">
       <div class="form-lbl-sec">Energie & Kosten</div>
       <div class="form-card">
-        <div class="form-row">
-          <span class="form-row-lbl">kWh geladen</span>
-          <input class="form-input" type="number" id="f-kwh" placeholder="0.0" step="0.1" inputmode="decimal">
-        </div>
-        <div class="form-row">
-          <span class="form-row-lbl">Betrag CHF</span>
-          <input class="form-input" type="number" id="f-cost" placeholder="0.00" step="0.01" inputmode="decimal">
-        </div>
-        <div class="form-row" style="flex-direction:column;align-items:stretch;gap:2px">
-          <div style="display:flex;align-items:center">
-            <span class="form-row-lbl">Tarif / kWh</span>
-            <input class="form-input blue" type="number" id="f-tarif" placeholder="—" step="0.001" inputmode="decimal" readonly style="background:rgba(0,122,255,0.05);border-radius:6px;padding:2px 6px">
-          </div>
+        <div class="form-row"><span class="form-row-lbl">kWh geladen</span><input class="form-input" type="number" id="f-kwh" placeholder="0.0" step="0.1" inputmode="decimal"></div>
+        <div class="form-row"><span class="form-row-lbl">Betrag CHF</span><input class="form-input" type="number" id="f-cost" placeholder="0.00" step="0.01" inputmode="decimal"></div>
+        <div class="form-row" style="flex-direction:column;gap:2px">
+          <div style="display:flex;align-items:center"><span class="form-row-lbl">Tarif / kWh</span><input class="form-input blue" type="number" id="f-tarif" placeholder="—" readonly style="background:rgba(0,122,255,0.06);border-radius:6px;padding:2px 6px;width:90px"></div>
           <div class="form-hint" id="tarif-hint"></div>
         </div>
       </div>
@@ -398,18 +270,9 @@ select.form-input { -webkit-appearance: none; cursor: pointer; }
     <div class="form-sec">
       <div class="form-lbl-sec">Akkustand & Kilometerstand</div>
       <div class="form-card">
-        <div class="form-row">
-          <span class="form-row-lbl">SoC Start %</span>
-          <input class="form-input" type="number" id="f-soc-start" placeholder="20" min="0" max="100" inputmode="numeric">
-        </div>
-        <div class="form-row">
-          <span class="form-row-lbl">SoC Ende %</span>
-          <input class="form-input" type="number" id="f-soc-end" placeholder="80" min="0" max="100" inputmode="numeric">
-        </div>
-        <div class="form-row">
-          <span class="form-row-lbl">Km-Stand</span>
-          <input class="form-input" type="number" id="f-km" placeholder="4882" inputmode="numeric">
-        </div>
+        <div class="form-row"><span class="form-row-lbl">SoC Start %</span><input class="form-input" type="number" id="f-soc-start" placeholder="20" min="0" max="100" inputmode="numeric"></div>
+        <div class="form-row"><span class="form-row-lbl">SoC Ende %</span><input class="form-input" type="number" id="f-soc-end" placeholder="80" min="0" max="100" inputmode="numeric"></div>
+        <div class="form-row"><span class="form-row-lbl">Km-Stand</span><input class="form-input" type="number" id="f-km" placeholder="4882" inputmode="numeric"></div>
       </div>
       <div class="form-footer">Km-Stand wird für die Verbrauchsberechnung (kWh/100km) benötigt.</div>
     </div>
@@ -417,11 +280,11 @@ select.form-input { -webkit-appearance: none; cursor: pointer; }
   </div>
 </div>
 
-<!-- CONFIRM DELETE -->
+<!-- CONFIRM -->
 <div class="confirm-overlay" id="confirm">
   <div class="confirm-box">
-    <div class="confirm-title" id="confirm-title">Alle Daten löschen?</div>
-    <div class="confirm-msg" id="confirm-msg">Diese Aktion kann nicht rückgängig gemacht werden.</div>
+    <div class="confirm-title" id="confirm-title"></div>
+    <div class="confirm-msg" id="confirm-msg"></div>
     <div class="confirm-btns">
       <button class="confirm-btn del" id="confirm-ok">Löschen</button>
       <button class="confirm-btn cancel" onclick="closeConfirm()">Abbrechen</button>
@@ -429,448 +292,311 @@ select.form-input { -webkit-appearance: none; cursor: pointer; }
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- SPINNER -->
+<div class="spinner-overlay" id="spinner">
+  <div class="spinner-box"><div class="spinner"></div><div class="spinner-msg" id="spinner-msg">Synchronisiere…</div></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── Store ───────────────────────────────────────────────────────
-const KEY = 'ev_ladetracker_v2';
-let entries = [];
+// ─── Constants ────────────────────────────────────────────────────
+const CFG_KEY   = 'ev_github_cfg';
+const DATA_PATH = 'data/charges.json';
+const MONTHS_S  = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const MONTHS_F  = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 
-function loadData() {
-  try { entries = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { entries = []; }
-  entries.sort((a,b) => b.date.localeCompare(a.date));
+// ─── State ────────────────────────────────────────────────────────
+let cfg = { user:'marcschneeberger87', repo:'ev-tracker', branch:'main', token:'' };
+let entries  = [];
+let fileSha  = null;
+let currentTab = 'home';
+
+// ─── Config ───────────────────────────────────────────────────────
+function loadConfig() {
+  try { cfg = { ...cfg, ...JSON.parse(localStorage.getItem(CFG_KEY)||'{}') }; } catch {}
+  document.getElementById('cfg-user').value   = cfg.user;
+  document.getElementById('cfg-repo').value   = cfg.repo;
+  document.getElementById('cfg-branch').value = cfg.branch;
+  document.getElementById('cfg-token').value  = cfg.token;
 }
 
-function saveData() {
-  localStorage.setItem(KEY, JSON.stringify(entries));
+function saveConfig() {
+  cfg.user   = document.getElementById('cfg-user').value.trim();
+  cfg.repo   = document.getElementById('cfg-repo').value.trim();
+  cfg.branch = document.getElementById('cfg-branch').value.trim();
+  cfg.token  = document.getElementById('cfg-token').value.trim();
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  document.getElementById('cfg-status').textContent = '✓ Gespeichert';
+  syncNow();
 }
 
-// ─── Computed ────────────────────────────────────────────────────
-function totalKwh() { return entries.reduce((s,e) => s + e.kwh, 0); }
-function totalCost() { return entries.reduce((s,e) => s + e.cost, 0); }
-function avgTarif() { const k = totalKwh(); return k > 0 ? totalCost()/k : null; }
+// ─── GitHub API ───────────────────────────────────────────────────
+const apiUrl = () => `https://api.github.com/repos/${cfg.user}/${cfg.repo}/contents/${DATA_PATH}`;
+const ghHeaders = () => ({
+  'Authorization': `token ${cfg.token}`,
+  'Accept': 'application/vnd.github.v3+json',
+  'Content-Type': 'application/json'
+});
 
-function thisMonth() {
-  const m = new Date().toISOString().slice(0,7);
-  return entries.filter(e => e.date.startsWith(m));
+async function fetchFromGitHub() {
+  if (!cfg.token) { setSyncState('err','Token fehlt'); return false; }
+  setSyncState('spin','Lade Daten…');
+  try {
+    const res = await fetch(apiUrl() + `?ref=${cfg.branch}&_=${Date.now()}`, { headers: ghHeaders() });
+    if (res.status === 404) {
+      entries = []; fileSha = null;
+      setSyncState('ok','Verbunden – leer');
+      return true;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    fileSha  = json.sha;
+    const raw = JSON.parse(atob(json.content.replace(/\n/g,'')));
+    entries  = (raw.entries || []).sort((a,b)=>b.date.localeCompare(a.date));
+    setSyncState('ok','Synchronisiert');
+    return true;
+  } catch(e) {
+    setSyncState('err','Sync-Fehler: '+e.message);
+    document.getElementById('cfg-status').textContent = '⚠️ ' + e.message;
+    return false;
+  }
 }
+
+async function pushToGitHub(commitMsg) {
+  if (!cfg.token) { showToast('Token fehlt – Einstellungen öffnen'); return false; }
+  setSyncState('spin','Speichere…');
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify({ entries }, null, 2))));
+  const body = { message: commitMsg, content, branch: cfg.branch };
+  if (fileSha) body.sha = fileSha;
+  try {
+    const res = await fetch(apiUrl(), { method:'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
+    if (res.status === 409 || res.status === 422) {
+      // SHA conflict – re-fetch then retry
+      await fetchFromGitHub();
+      return await pushToGitHub(commitMsg);
+    }
+    if (!res.ok) { const e=await res.json(); throw new Error(e.message||`HTTP ${res.status}`); }
+    const json = await res.json();
+    fileSha = json.content.sha;
+    setSyncState('ok','Synchronisiert');
+    return true;
+  } catch(e) {
+    setSyncState('err','Speichern fehlgeschlagen');
+    showToast('⚠️ '+e.message);
+    return false;
+  }
+}
+
+async function syncNow() {
+  showSpinner('Synchronisiere…');
+  const ok = await fetchFromGitHub();
+  hideSpinner();
+  if (ok) { renderCurrent(); showToast('Synchronisiert ✓'); }
+}
+
+// ─── Sync indicator ───────────────────────────────────────────────
+function setSyncState(state, label) {
+  document.getElementById('sync-dot').className = 'sync-dot ' + state;
+  document.getElementById('sync-label').textContent = label;
+}
+
+// ─── Spinner ──────────────────────────────────────────────────────
+function showSpinner(msg) { document.getElementById('spinner-msg').textContent=msg; document.getElementById('spinner').classList.add('open'); }
+function hideSpinner()    { document.getElementById('spinner').classList.remove('open'); }
+
+// ─── Helpers ──────────────────────────────────────────────────────
+const fmtDate = s => { const d=new Date(s); return `${d.getDate()}. ${MONTHS_F[d.getMonth()]} ${d.getFullYear()}`; };
+const fmtChf  = v => `CHF ${(+v).toFixed(2)}`;
+const fmtN    = (v,d=1) => (+v).toFixed(d);
+const fmtKey  = k => { const [y,m]=k.split('-'); return `${MONTHS_F[+m-1]} ${y}`; };
+
+const totalKwh  = () => entries.reduce((s,e)=>s+e.kwh,0);
+const totalCost = () => entries.reduce((s,e)=>s+e.cost,0);
+const avgTarif  = () => { const k=totalKwh(); return k>0?totalCost()/k:null; };
+const thisMonth = () => { const m=new Date().toISOString().slice(0,7); return entries.filter(e=>e.date.startsWith(m)); };
 
 function consumptionPer100km() {
-  const wk = entries.filter(e=>e.km).sort((a,b)=>a.date.localeCompare(b.date));
-  if (wk.length < 2) return null;
-  const km = wk[wk.length-1].km - wk[0].km;
-  if (km <= 0) return null;
-  const kwh = wk.slice(1).reduce((s,e)=>s+e.kwh,0);
-  return (kwh/km)*100;
+  const wk=entries.filter(e=>e.km).sort((a,b)=>a.date.localeCompare(b.date));
+  if (wk.length<2) return null;
+  const km=wk[wk.length-1].km-wk[0].km;
+  return km>0?(wk.slice(1).reduce((s,e)=>s+e.kwh,0)/km)*100:null;
 }
-
 function totalKmDriven() {
-  const wk = entries.filter(e=>e.km).sort((a,b)=>a.date.localeCompare(b.date));
-  if (wk.length < 2) return null;
-  const d = wk[wk.length-1].km - wk[0].km;
-  return d > 0 ? d : null;
+  const wk=entries.filter(e=>e.km).sort((a,b)=>a.date.localeCompare(b.date));
+  if (wk.length<2) return null;
+  const d=wk[wk.length-1].km-wk[0].km; return d>0?d:null;
 }
-
 function monthlyData() {
-  const fmt = e => { const d=new Date(e.date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; };
-  const map = {};
-  entries.forEach(e => {
-    const k = fmt(e);
-    if (!map[k]) map[k] = {kwh:0, cost:0, count:0};
-    map[k].kwh += e.kwh; map[k].cost += e.cost; map[k].count++;
-  });
-  return Object.keys(map).sort().map(k => ({ key:k, ...map[k] }));
+  const map={};
+  entries.forEach(e=>{ const k=e.date.slice(0,7); if(!map[k]) map[k]={kwh:0,cost:0,count:0}; map[k].kwh+=e.kwh; map[k].cost+=e.cost; map[k].count++; });
+  return Object.keys(map).sort().map(k=>({key:k,...map[k]}));
 }
-
 function groupedByMonth() {
-  const map = {};
-  entries.forEach(e => {
-    const d = new Date(e.date);
-    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    if (!map[k]) map[k] = [];
-    map[k].push(e);
-  });
-  return Object.keys(map).sort().reverse().map(k => ({ key:k, entries: map[k] }));
+  const map={};
+  entries.forEach(e=>{ const k=e.date.slice(0,7); if(!map[k]) map[k]=[]; map[k].push(e); });
+  return Object.keys(map).sort().reverse().map(k=>({key:k,entries:map[k]}));
 }
-
 function providerStats() {
-  const map = {};
-  entries.forEach(e => {
-    if (!map[e.station]) map[e.station] = {kwh:0, cost:0, count:0};
-    map[e.station].kwh += e.kwh; map[e.station].cost += e.cost; map[e.station].count++;
-  });
+  const map={};
+  entries.forEach(e=>{ if(!map[e.station]) map[e.station]={kwh:0,cost:0,count:0}; map[e.station].kwh+=e.kwh; map[e.station].cost+=e.cost; map[e.station].count++; });
   return Object.entries(map).map(([name,d])=>({name,...d})).sort((a,b)=>b.cost-a.cost);
 }
 
-// ─── Format helpers ───────────────────────────────────────────────
-const MONTHS_SHORT = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-const MONTHS_FULL  = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-
-function fmtDate(str) {
-  const d = new Date(str);
-  return `${d.getDate()}. ${MONTHS_FULL[d.getMonth()]} ${d.getFullYear()}`;
-}
-function fmtMonthKey(k) {
-  const [y,m] = k.split('-');
-  return `${MONTHS_FULL[+m-1]} ${y}`;
-}
-function fmtChf(v) { return `CHF ${(+v).toFixed(2)}`; }
-function fmtN(v,d=1) { return (+v).toFixed(d); }
-
-// ─── Tab navigation ───────────────────────────────────────────────
-let currentTab = 'home';
-let charts = {};
-
+// ─── Navigation ───────────────────────────────────────────────────
 function showTab(name, el) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('s-'+name).classList.add('active');
   el.classList.add('on');
-  currentTab = name;
-  if (name==='home') renderHome();
-  if (name==='history') renderHistory();
-  if (name==='stats') renderStats();
+  currentTab=name; renderCurrent();
+}
+function renderCurrent() {
+  if(currentTab==='home')    renderHome();
+  if(currentTab==='history') renderHistory();
+  if(currentTab==='stats')   renderStats();
 }
 
-// ─── Render HOME ──────────────────────────────────────────────────
+// ─── HOME ─────────────────────────────────────────────────────────
 function renderHome() {
-  document.getElementById('btn-delete-all').style.display = entries.length ? 'flex' : 'none';
-  const body = document.getElementById('home-body');
+  document.getElementById('btn-del-all').style.display = entries.length?'flex':'none';
+  const body=document.getElementById('home-body');
   if (!entries.length) {
-    body.innerHTML = `<div class="empty">
-      <div class="empty-icon">⚡</div>
-      <div class="empty-title">Noch keine Ladevorgänge</div>
-      <div class="empty-sub">Erfasse deinen ersten Ladevorgang<br>mit dem + Button oben rechts.</div>
-    </div>`;
+    body.innerHTML=`<div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Noch keine Ladevorgänge</div><div class="empty-sub">${cfg.token?'Tippe auf + um loszulegen.':'Bitte GitHub Token in den Einstellungen hinterlegen.'}</div>${!cfg.token?`<button class="empty-btn" onclick="showTab('settings',document.querySelectorAll('.tab')[3])">Einstellungen öffnen</button>`:''}</div>`;
     return;
   }
-  const tm = thisMonth(), tmKwh = tm.reduce((s,e)=>s+e.kwh,0), tmCost = tm.reduce((s,e)=>s+e.cost,0);
-  const cons = consumptionPer100km(), km = totalKmDriven(), at = avgTarif();
-
-  body.innerHTML = `
+  const tm=thisMonth(), tmK=tm.reduce((s,e)=>s+e.kwh,0), tmC=tm.reduce((s,e)=>s+e.cost,0);
+  const cons=consumptionPer100km(), km=totalKmDriven(), at=avgTarif();
+  body.innerHTML=`
     <div class="metrics">
-      <div class="mc">
-        <div class="mc-lbl">Total kWh</div>
-        <div class="mc-val">${fmtN(totalKwh())}<span class="mc-unit"> kWh</span></div>
-        <div class="mc-sub">${entries.length} Ladevorhänge</div>
-      </div>
-      <div class="mc">
-        <div class="mc-lbl">Total Kosten</div>
-        <div class="mc-val">${fmtN(totalCost(),2)}<span class="mc-unit"> CHF</span></div>
-        <div class="mc-sub">${at ? 'Ø '+fmtN(at,3)+' CHF/kWh' : '—'}</div>
-      </div>
-      <div class="mc">
-        <div class="mc-lbl">Diesen Monat</div>
-        <div class="mc-val">${fmtN(tmKwh)}<span class="mc-unit"> kWh</span></div>
-        <div class="mc-sub">CHF ${fmtN(tmCost,2)}</div>
-      </div>
-      <div class="mc ${cons ? 'hl' : ''}">
-        <div class="mc-lbl">Verbrauch</div>
-        <div class="mc-val">${cons ? fmtN(cons) : '—'}</div>
-        <div class="${cons ? 'mc-unit' : 'mc-sub'}">${cons ? 'kWh/100km' : ''}</div>
-        <div class="mc-sub">${cons ? (km ? km+' km gefahren' : 'Gesamtdurchschnitt') : 'Km-Stand erfassen'}</div>
-      </div>
+      <div class="mc"><div class="mc-lbl">Total kWh</div><div class="mc-val">${fmtN(totalKwh())}<span class="mc-unit"> kWh</span></div><div class="mc-sub">${entries.length} Ladevorgänge</div></div>
+      <div class="mc"><div class="mc-lbl">Total Kosten</div><div class="mc-val">${fmtN(totalCost(),2)}<span class="mc-unit"> CHF</span></div><div class="mc-sub">${at?'Ø '+fmtN(at,3)+' CHF/kWh':'—'}</div></div>
+      <div class="mc"><div class="mc-lbl">Diesen Monat</div><div class="mc-val">${fmtN(tmK)}<span class="mc-unit"> kWh</span></div><div class="mc-sub">CHF ${fmtN(tmC,2)}</div></div>
+      <div class="mc ${cons?'hl':''}"><div class="mc-lbl">Verbrauch</div><div class="mc-val">${cons?fmtN(cons):'—'}</div><div class="${cons?'mc-unit':'mc-sub'}">${cons?'kWh/100km':''}</div><div class="mc-sub">${cons?(km?km+' km gefahren':'Durchschnitt'):'Km-Stand erfassen'}</div></div>
     </div>
     <div class="sec">Monatsverlauf CHF</div>
     <div class="card"><div class="chart-wrap"><canvas id="chart-home" class="chart-canvas"></canvas></div></div>
     <div class="sec">Letzte Ladevorgänge</div>
-    <div class="card" id="recent-rows">
-      ${entries.slice(0,5).map(crowHTML).join('')}
-    </div>
-  `;
-  renderBarChart('chart-home', monthlyData(), 'cost', getComputedStyle(document.documentElement).getPropertyValue('--blue').trim() || '#007AFF', 'CHF');
+    <div class="card">${entries.slice(0,5).map(rowHTML).join('')}</div>`;
+  renderBarChart('chart-home',monthlyData(),'cost','#007AFF','CHF');
 }
 
-// ─── Render HISTORY ───────────────────────────────────────────────
+// ─── HISTORY ──────────────────────────────────────────────────────
 function renderHistory() {
-  const body = document.getElementById('history-body');
-  if (!entries.length) {
-    body.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Keine Einträge</div><div class="empty-sub">Erfasse Ladevorgänge über die Übersicht.</div></div>`;
-    return;
-  }
-  body.innerHTML = groupedByMonth().map(g => {
-    const kwh = g.entries.reduce((s,e)=>s+e.kwh,0);
-    const cost = g.entries.reduce((s,e)=>s+e.cost,0);
-    return `
-      <div class="month-hdr">
-        <span>${fmtMonthKey(g.key)}</span>
-        <span>${fmtN(kwh)} kWh · CHF ${fmtN(cost,2)}</span>
-      </div>
-      <div class="card" style="margin-bottom:20px">
-        ${g.entries.map(e => crowHTMLWithDelete(e)).join('')}
-      </div>`;
+  const body=document.getElementById('history-body');
+  if(!entries.length){body.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Keine Einträge</div></div>`;return;}
+  body.innerHTML=groupedByMonth().map(g=>{
+    const kwh=g.entries.reduce((s,e)=>s+e.kwh,0), cost=g.entries.reduce((s,e)=>s+e.cost,0);
+    return `<div class="month-hdr"><span>${fmtKey(g.key)}</span><span>${fmtN(kwh)} kWh · CHF ${fmtN(cost,2)}</span></div>
+    <div class="card" style="margin-bottom:20px">${g.entries.map(e=>rowHTMLDel(e)).join('')}</div>`;
   }).join('');
 }
 
-// ─── Render STATS ─────────────────────────────────────────────────
+// ─── STATS ────────────────────────────────────────────────────────
 function renderStats() {
-  const body = document.getElementById('stats-body');
-  if (!entries.length) {
-    body.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Keine Daten</div><div class="empty-sub">Erfasse Ladevorgänge um Statistiken zu sehen.</div></div>`;
-    return;
-  }
-  const cons = consumptionPer100km(), km = totalKmDriven();
-  const providers = providerStats();
-
-  const consHTML = cons ? `
-    <div class="cons-box">
-      <div style="flex:1">
-        <div class="cons-big">${fmtN(cons)}</div>
-        <div class="cons-lbl">kWh/100km</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px">Gesamtdurchschnitt</div>
-      </div>
-      ${km ? `<div style="text-align:right">
-        <div style="font-size:28px;font-weight:700;letter-spacing:-0.5px">${km}</div>
-        <div class="cons-lbl">km gefahren</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px">Gesamtstrecke</div>
-      </div>` : ''}
-    </div>` :
-    `<div style="background:var(--gray5);border-radius:10px;padding:14px;display:flex;gap:10px;align-items:flex-start">
-      <span style="font-size:18px">ℹ️</span>
-      <span style="font-size:13px;color:var(--text3);line-height:1.5">Erfasse den Km-Stand bei jedem Ladevorgang um den Verbrauch zu berechnen.</span>
-    </div>`;
-
-  body.innerHTML = `
+  const body=document.getElementById('stats-body');
+  if(!entries.length){body.innerHTML=`<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Keine Daten</div></div>`;return;}
+  const cons=consumptionPer100km(), km=totalKmDriven();
+  body.innerHTML=`
     <div class="sec">kWh pro Monat</div>
     <div class="card"><div class="chart-wrap"><canvas id="chart-kwh" class="chart-canvas"></canvas></div></div>
     <div class="sec">Verbrauch kWh/100km</div>
-    <div class="card" style="padding:14px;margin-bottom:16px">${consHTML}</div>
+    <div class="card" style="padding:14px;margin-bottom:16px">
+      ${cons?`<div class="cons-box"><div style="flex:1"><div class="cons-big">${fmtN(cons)}</div><div class="cons-lbl">kWh/100km</div><div style="font-size:10px;color:var(--text3);margin-top:2px">Gesamtdurchschnitt</div></div>${km?`<div style="text-align:right"><div style="font-size:28px;font-weight:700;letter-spacing:-0.5px">${km}</div><div class="cons-lbl">km gefahren</div></div>`:''}</div>`:`<div style="background:var(--gray5);border-radius:10px;padding:14px;font-size:13px;color:var(--text3)">Km-Stand bei Ladevorgängen erfassen um den Verbrauch zu berechnen.</div>`}
+    </div>
     <div class="sec">Anbieter</div>
-    <div class="card">
-      ${providers.map(p => `
-        <div class="stat-row">
-          <div style="flex:1;min-width:0">
-            <div class="stat-name">${p.name}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px">${p.count} Vorgänge · ${fmtN(p.kwh)} kWh · Ø ${p.kwh>0?fmtN(p.cost/p.kwh,3):'—'} CHF/kWh</div>
-          </div>
-          <div class="stat-chf">${fmtChf(p.cost)}</div>
-        </div>`).join('')}
-    </div>`;
-
-  renderBarChart('chart-kwh', monthlyData(), 'kwh', '#34C759', 'kWh');
+    <div class="card">${providerStats().map(p=>`<div class="stat-row"><div style="flex:1;min-width:0"><div class="stat-name">${p.name}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${p.count} Vorgänge · ${fmtN(p.kwh)} kWh · Ø ${p.kwh>0?fmtN(p.cost/p.kwh,3):'—'} CHF/kWh</div></div><div class="stat-chf">${fmtChf(p.cost)}</div></div>`).join('')}</div>`;
+  renderBarChart('chart-kwh',monthlyData(),'kwh','#34C759','kWh');
 }
 
-// ─── Charge Row HTML ──────────────────────────────────────────────
-function crowHTML(e) {
-  const isdc = e.type === 'DC';
-  const tarif = e.kwh > 0 ? fmtN(e.cost/e.kwh,3)+' CHF/kWh' : '';
-  const soc = (e.socStart != null && e.socEnd != null) ? `
-    <div class="soc">
-      <span class="soc-n">${e.socStart}%</span>
-      <div class="soc-bg"><div class="soc-fill" style="width:${Math.min(100,e.socEnd)}%"></div></div>
-      <span class="soc-n r">${e.socEnd}%</span>
-    </div>` : '';
-  return `<div class="crow">
-    <div class="crow-icon ${isdc?'dc':'ac'}">${isdc?'⚡':'🔌'}</div>
-    <div class="crow-info">
-      <div class="crow-name">${e.station}</div>
-      <div class="crow-meta">
-        ${fmtDate(e.date)}
-        <span class="badge ${isdc?'badge-dc':'badge-ac'}">${e.type}</span>
-        ${tarif ? `<span class="badge-tarif">${tarif}</span>` : ''}
-      </div>
-      ${soc}
-    </div>
-    <div class="crow-right">
-      <div class="crow-chf">${fmtChf(e.cost)}</div>
-      <div class="crow-kwh">${fmtN(e.kwh)} kWh</div>
-      ${e.km ? `<div class="crow-km">${e.km} km</div>` : ''}
-    </div>
-  </div>`;
+// ─── Row HTML ─────────────────────────────────────────────────────
+function rowHTML(e) {
+  const dc=e.type==='DC';
+  const t=e.kwh>0?fmtN(e.cost/e.kwh,3)+' CHF/kWh':'';
+  const soc=(e.socStart!=null&&e.socEnd!=null)?`<div class="soc"><span class="soc-n">${e.socStart}%</span><div class="soc-bg"><div class="soc-fill" style="width:${Math.min(100,e.socEnd)}%"></div></div><span class="soc-n r">${e.socEnd}%</span></div>`:'';
+  return `<div class="crow"><div class="crow-icon ${dc?'dc':'ac'}">${dc?'⚡':'🔌'}</div><div class="crow-info"><div class="crow-name">${e.station}</div><div class="crow-meta">${fmtDate(e.date)}<span class="badge ${dc?'badge-dc':'badge-ac'}">${e.type}</span>${t?`<span style="font-size:9.5px;color:var(--text3)">${t}</span>`:''}</div>${soc}</div><div class="crow-right"><div class="crow-chf">${fmtChf(e.cost)}</div><div class="crow-kwh">${fmtN(e.kwh)} kWh</div>${e.km?`<div class="crow-km">${e.km} km</div>`:''}</div></div>`;
 }
 
-function crowHTMLWithDelete(e) {
-  return crowHTML(e).replace('<div class="crow">', `<div class="crow" style="position:relative">`) +
-    `<button onclick="deleteEntry('${e.id}')" title="Löschen" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--red);border:none;border-radius:8px;color:#fff;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0.85">×</button>`;
-  // Simpler approach: just add delete button in history
-}
-
-// Rewrite crowHTMLWithDelete cleanly
-function crowHTMLWithDelete(e) {
-  const isdc = e.type === 'DC';
-  const tarif = e.kwh > 0 ? fmtN(e.cost/e.kwh,3)+' CHF/kWh' : '';
-  const soc = (e.socStart != null && e.socEnd != null) ? `
-    <div class="soc">
-      <span class="soc-n">${e.socStart}%</span>
-      <div class="soc-bg"><div class="soc-fill" style="width:${Math.min(100,e.socEnd)}%"></div></div>
-      <span class="soc-n r">${e.socEnd}%</span>
-    </div>` : '';
-  return `<div class="crow" style="position:relative;padding-right:50px">
-    <div class="crow-icon ${isdc?'dc':'ac'}">${isdc?'⚡':'🔌'}</div>
-    <div class="crow-info">
-      <div class="crow-name">${e.station}</div>
-      <div class="crow-meta">
-        ${fmtDate(e.date)}
-        <span class="badge ${isdc?'badge-dc':'badge-ac'}">${e.type}</span>
-        ${tarif ? `<span class="badge-tarif">${tarif}</span>` : ''}
-      </div>
-      ${soc}
-    </div>
-    <div class="crow-right">
-      <div class="crow-chf">${fmtChf(e.cost)}</div>
-      <div class="crow-kwh">${fmtN(e.kwh)} kWh</div>
-      ${e.km ? `<div class="crow-km">${e.km} km</div>` : ''}
-    </div>
-    <button onclick="deleteEntry('${e.id}')" title="Löschen" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--red);font-size:22px;cursor:pointer;line-height:1;padding:4px">×</button>
-  </div>`;
+function rowHTMLDel(e) {
+  const dc=e.type==='DC';
+  const t=e.kwh>0?fmtN(e.cost/e.kwh,3)+' CHF/kWh':'';
+  const soc=(e.socStart!=null&&e.socEnd!=null)?`<div class="soc"><span class="soc-n">${e.socStart}%</span><div class="soc-bg"><div class="soc-fill" style="width:${Math.min(100,e.socEnd)}%"></div></div><span class="soc-n r">${e.socEnd}%</span></div>`:'';
+  return `<div class="crow" style="position:relative;padding-right:46px"><div class="crow-icon ${dc?'dc':'ac'}">${dc?'⚡':'🔌'}</div><div class="crow-info"><div class="crow-name">${e.station}</div><div class="crow-meta">${fmtDate(e.date)}<span class="badge ${dc?'badge-dc':'badge-ac'}">${e.type}</span>${t?`<span style="font-size:9.5px;color:var(--text3)">${t}</span>`:''}</div>${soc}</div><div class="crow-right"><div class="crow-chf">${fmtChf(e.cost)}</div><div class="crow-kwh">${fmtN(e.kwh)} kWh</div>${e.km?`<div class="crow-km">${e.km} km</div>`:''}</div><button onclick="deleteEntry('${e.id}')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--red);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1">×</button></div>`;
 }
 
 // ─── Charts ───────────────────────────────────────────────────────
 function renderBarChart(id, data, field, color, unit) {
-  const existing = Chart.getChart(id);
-  if (existing) existing.destroy();
-  const el = document.getElementById(id);
-  if (!el) return;
-  const labels = data.map(d => MONTHS_SHORT[+d.key.split('-')[1]-1] + ' ' + d.key.split('-')[0].slice(2));
-  const vals = data.map(d => +d[field].toFixed(2));
-  new Chart(el, {
-    type: 'bar',
-    data: { labels, datasets: [{ data: vals, backgroundColor: color, borderRadius: 5, borderSkipped: false }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: {
-        callbacks: { label: ctx => `${ctx.parsed.y.toFixed(field==='cost'?2:1)} ${unit}` }
-      }},
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#8E8E93', font: { size: 10, family: 'DM Sans' } } },
-        y: { grid: { color: 'rgba(142,142,147,0.15)' }, ticks: {
-          color: '#8E8E93', font: { size: 10, family: 'DM Sans' },
-          callback: v => field==='cost' ? 'CHF '+v : v+' kWh'
-        }}
-      }
-    }
-  });
+  const ex=Chart.getChart(id); if(ex) ex.destroy();
+  const el=document.getElementById(id); if(!el) return;
+  new Chart(el,{type:'bar',data:{labels:data.map(d=>MONTHS_S[+d.key.split('-')[1]-1]),datasets:[{data:data.map(d=>+d[field].toFixed(2)),backgroundColor:color,borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toFixed(field==='cost'?2:1)} ${unit}`}}},scales:{x:{grid:{display:false},ticks:{color:'#8E8E93',font:{size:10}}},y:{grid:{color:'rgba(142,142,147,0.15)'},ticks:{color:'#8E8E93',font:{size:10},callback:v=>field==='cost'?'CHF '+v:v+' kWh'}}}}});
 }
 
-// ─── Add Entry Sheet ──────────────────────────────────────────────
+// ─── Sheet ────────────────────────────────────────────────────────
 function openSheet() {
-  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('f-station').value = '';
-  document.getElementById('f-kwh').value = '';
-  document.getElementById('f-cost').value = '';
-  document.getElementById('f-tarif').value = '';
-  document.getElementById('f-soc-start').value = '';
-  document.getElementById('f-soc-end').value = '';
-  document.getElementById('f-km').value = '';
-  document.getElementById('tarif-hint').textContent = '';
-  document.getElementById('save-btn').disabled = true;
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  ['f-station','f-kwh','f-cost','f-tarif','f-soc-start','f-soc-end','f-km'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('tarif-hint').textContent='';
+  document.getElementById('save-btn').disabled=true;
+  document.getElementById('station-list').innerHTML=[...new Set(entries.map(e=>e.station))].map(s=>`<option value="${s}">`).join('');
   document.getElementById('sheet').classList.add('open');
 }
-
 function closeSheet() { document.getElementById('sheet').classList.remove('open'); }
-function closeSheetOutside(e) { if (e.target === document.getElementById('sheet')) closeSheet(); }
+function closeSheetOutside(e) { if(e.target===document.getElementById('sheet')) closeSheet(); }
 
 function calcTarif() {
-  const kwh = parseFloat(document.getElementById('f-kwh').value);
-  const cost = parseFloat(document.getElementById('f-cost').value);
-  const hint = document.getElementById('tarif-hint');
-  const tarif = document.getElementById('f-tarif');
-  const station = document.getElementById('f-station').value.trim();
-  const canSave = station && kwh > 0 && cost > 0;
-  document.getElementById('save-btn').disabled = !canSave;
-  if (kwh > 0 && cost > 0) {
-    tarif.value = (cost/kwh).toFixed(3);
-    hint.textContent = 'Berechnet aus kWh und Betrag';
-  } else {
-    tarif.value = '';
-    hint.textContent = '';
-  }
+  const kwh=parseFloat(document.getElementById('f-kwh').value);
+  const cost=parseFloat(document.getElementById('f-cost').value);
+  document.getElementById('save-btn').disabled = !(document.getElementById('f-station').value.trim()&&kwh>0&&cost>0);
+  if(kwh>0&&cost>0){ document.getElementById('f-tarif').value=(cost/kwh).toFixed(3); document.getElementById('tarif-hint').textContent='Berechnet aus kWh und Betrag'; }
+  else { document.getElementById('f-tarif').value=''; document.getElementById('tarif-hint').textContent=''; }
 }
+['f-kwh','f-cost','f-station'].forEach(id=>document.getElementById(id).addEventListener('input',calcTarif));
 
-document.getElementById('f-kwh').addEventListener('input', calcTarif);
-document.getElementById('f-cost').addEventListener('input', calcTarif);
-document.getElementById('f-station').addEventListener('input', calcTarif);
-
-function saveEntry() {
-  const kwh = parseFloat(document.getElementById('f-kwh').value);
-  const cost = parseFloat(document.getElementById('f-cost').value);
-  const station = document.getElementById('f-station').value.trim();
-  if (!station || !kwh || !cost) return;
-  const entry = {
-    id: Date.now().toString(),
-    date: document.getElementById('f-date').value,
-    station,
-    type: document.getElementById('f-type').value,
-    kwh, cost,
-    socStart: parseInt(document.getElementById('f-soc-start').value) || null,
-    socEnd: parseInt(document.getElementById('f-soc-end').value) || null,
-    km: parseInt(document.getElementById('f-km').value) || null
-  };
-  entries.unshift(entry);
-  entries.sort((a,b) => b.date.localeCompare(a.date));
-  saveData();
-  closeSheet();
-  renderHome();
-  showToast('Ladevorgang gespeichert ✓');
+async function saveEntry() {
+  const kwh=parseFloat(document.getElementById('f-kwh').value);
+  const cost=parseFloat(document.getElementById('f-cost').value);
+  const station=document.getElementById('f-station').value.trim();
+  if(!station||!kwh||!cost) return;
+  const entry={id:Date.now().toString(),date:document.getElementById('f-date').value,station,type:document.getElementById('f-type').value,kwh,cost,socStart:parseInt(document.getElementById('f-soc-start').value)||null,socEnd:parseInt(document.getElementById('f-soc-end').value)||null,km:parseInt(document.getElementById('f-km').value)||null};
+  entries.unshift(entry); entries.sort((a,b)=>b.date.localeCompare(a.date));
+  closeSheet(); renderHome();
+  showSpinner('Speichere auf GitHub…');
+  const ok=await pushToGitHub(`Add: ${station} ${entry.date}`);
+  hideSpinner(); if(ok) showToast('Ladevorgang gespeichert ✓');
 }
 
 // ─── Delete ───────────────────────────────────────────────────────
 function deleteEntry(id) {
-  const e = entries.find(x => x.id === id);
-  if (!e) return;
-  openConfirm(
-    'Eintrag löschen?',
-    `${e.station} · ${fmtDate(e.date)}`,
-    () => {
-      entries = entries.filter(x => x.id !== id);
-      saveData();
-      if (currentTab === 'history') renderHistory();
-      else renderHome();
-      showToast('Eintrag gelöscht');
-    }
-  );
-}
-
-function confirmDeleteAll() {
-  openConfirm(
-    'Alle Daten löschen?',
-    `${entries.length} Einträge werden unwiderruflich gelöscht.`,
-    () => { entries = []; saveData(); renderHome(); showToast('Alle Daten gelöscht'); }
-  );
-}
-
-let confirmCallback = null;
-function openConfirm(title, msg, cb) {
-  document.getElementById('confirm-title').textContent = title;
-  document.getElementById('confirm-msg').textContent = msg;
-  confirmCallback = cb;
-  document.getElementById('confirm').classList.add('open');
-}
-function closeConfirm() { document.getElementById('confirm').classList.remove('open'); }
-document.getElementById('confirm-ok').addEventListener('click', () => {
-  closeConfirm();
-  if (confirmCallback) confirmCallback();
-  confirmCallback = null;
-});
-
-// ─── Toast ────────────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-// ─── PWA Install ─────────────────────────────────────────────────
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const banner = document.createElement('div');
-  banner.className = 'install-banner';
-  banner.innerHTML = `<span>⚡</span><span>Als App installieren – offline nutzbar</span><button id="install-btn">Installieren</button>`;
-  document.getElementById('app').prepend(banner);
-  document.getElementById('install-btn').addEventListener('click', () => {
-    deferredPrompt.prompt();
-    banner.remove();
+  const e=entries.find(x=>x.id===id); if(!e) return;
+  openConfirm('Eintrag löschen?',`${e.station} · ${fmtDate(e.date)}`,async()=>{
+    entries=entries.filter(x=>x.id!==id); renderCurrent();
+    showSpinner('Lösche auf GitHub…');
+    await pushToGitHub(`Delete: ${e.station} ${e.date}`);
+    hideSpinner(); showToast('Eintrag gelöscht');
   });
-});
+}
+function confirmDeleteAll() {
+  openConfirm('Alle Daten löschen?',`${entries.length} Einträge werden unwiderruflich gelöscht.`,async()=>{
+    entries=[]; renderCurrent();
+    showSpinner('Lösche auf GitHub…');
+    await pushToGitHub('Delete all charges');
+    hideSpinner(); showToast('Alle Daten gelöscht');
+  });
+}
 
-// ─── Init ────────────────────────────────────────────────────────
-loadData();
-renderHome();
+let confirmCb=null;
+function openConfirm(t,m,cb){document.getElementById('confirm-title').textContent=t;document.getElementById('confirm-msg').textContent=m;confirmCb=cb;document.getElementById('confirm').classList.add('open');}
+function closeConfirm(){document.getElementById('confirm').classList.remove('open');}
+document.getElementById('confirm-ok').addEventListener('click',()=>{closeConfirm();if(confirmCb)confirmCb();confirmCb=null;});
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+
+// ─── PWA ──────────────────────────────────────────────────────────
+if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+
+// ─── Init ─────────────────────────────────────────────────────────
+loadConfig();
+if(cfg.token){ syncNow(); } else { setSyncState('err','Token fehlt'); renderHome(); }
 </script>
-<script>if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}</script>
 </body>
 </html>
