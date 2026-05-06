@@ -1,15 +1,3 @@
 {
-  "entries": [
-    {
-      "id": "1778089643934",
-      "date": "2026-05-06",
-      "station": "Test",
-      "type": "AC",
-      "kwh": 10,
-      "cost": 20,
-      "socStart": null,
-      "socEnd": null,
-      "km": null
-    }
-  ]
+  "entries": []
 }
