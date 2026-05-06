@@ -1,3 +1,15 @@
 {
-  "entries": []
+  "entries": [
+    {
+      "id": "1778089743664",
+      "date": "2026-05-01",
+      "station": "Flyer Huttwil",
+      "type": "AC",
+      "kwh": 29.2,
+      "cost": 7,
+      "socStart": null,
+      "socEnd": null,
+      "km": null
+    }
+  ]
 }
