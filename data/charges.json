@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "1778941025022",
+      "date": "2026-05-16",
+      "station": "Migros Langenthal",
+      "type": "DC",
+      "kwh": 5.95,
+      "cost": 2.85,
+      "socStart": 68,
+      "socEnd": 80,
+      "km": 6430
+    },
+    {
       "id": "1778940943571",
       "date": "2026-05-13",
       "station": "Flyer Huttwil",
