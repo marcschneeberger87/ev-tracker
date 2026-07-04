@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "1783154295681",
+      "date": "2026-07-04",
+      "station": "Theater Langenthal",
+      "type": "AC",
+      "kwh": 13.48,
+      "cost": 6.73,
+      "socStart": 62,
+      "socEnd": 92,
+      "km": 7443
+    },
+    {
       "id": "1782396570081",
       "date": "2026-06-25",
       "station": "Flyer Huttwil",
