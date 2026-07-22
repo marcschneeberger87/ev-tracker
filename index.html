@@ -21,14 +21,18 @@
   --radius: 12px; --tab-h: 56px;
   --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
 }
-@media (prefers-color-scheme: dark) {
-  :root { --bg:#000; --card:#1C1C1E; --text:#fff; --text2:rgba(235,235,245,0.75); --text3:rgba(235,235,245,0.45); --sep:rgba(255,255,255,0.1); --gray5:#2C2C2E; }
-  .tab-bar { background: rgba(28,28,30,0.94) !important; }
-  .badge-ac { background:rgba(52,199,89,0.18)!important; color:#30D158!important; }
-  .badge-dc { background:rgba(0,122,255,0.18)!important; color:#4EA8FF!important; }
-  .mc.hl { background:#0A84FF!important; }
-  .soc-bg { background:rgba(255,255,255,0.12)!important; }
+html[data-theme="dark"] {
+  --bg:#000; --card:#1C1C1E; --text:#fff; --text2:rgba(235,235,245,0.75); --text3:rgba(235,235,245,0.45); --sep:rgba(255,255,255,0.1); --gray5:#2C2C2E;
 }
+html[data-theme="dark"] .tab-bar { background: rgba(28,28,30,0.94) !important; }
+html[data-theme="dark"] .badge-ac { background:rgba(52,199,89,0.18)!important; color:#30D158!important; }
+html[data-theme="dark"] .badge-dc { background:rgba(0,122,255,0.18)!important; color:#4EA8FF!important; }
+html[data-theme="dark"] .mc.hl { background:#0A84FF!important; }
+html[data-theme="dark"] .soc-bg { background:rgba(255,255,255,0.12)!important; }
+
+.theme-opt { display:flex; gap:0; }
+.theme-opt button { flex:1; padding:10px 0; background:none; border:none; color:var(--text2); font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; }
+.theme-opt button.on { color:var(--blue); border-bottom-color:var(--blue); }
 html,body { height:100%; width:100%; background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-system,'Helvetica Neue',sans-serif; overflow:hidden; -webkit-font-smoothing:antialiased; }
 #app { height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
 
@@ -43,7 +47,7 @@ html,body { height:100%; width:100%; background:var(--bg); color:var(--text); fo
 .sync-dot.err { background:var(--red); }
 .sync-dot.spin { background:var(--orange); animation:pulse 1s infinite; }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-.nav-btn-r { position:absolute; right:16px; top:calc(var(--safe-t)+10px); background:var(--blue); border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:20px; }
+.nav-btn-r { position:absolute; right:16px; top:50%; transform:translateY(-50%); background:var(--blue); border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:20px; }
 .nav-btn-l { position:absolute; left:16px; top:calc(var(--safe-t)+13px); background:none; border:none; cursor:pointer; color:var(--red); display:flex; align-items:center; }
 
 .scroll-area { flex:1; overflow-y:auto; padding:16px; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:calc(var(--tab-h) + var(--safe-b) + 20px); }
@@ -173,9 +177,6 @@ html,body { height:100%; width:100%; background:var(--bg); color:var(--text); fo
   <!-- HOME -->
   <div class="screen active" id="s-home">
     <div class="nav-header">
-      <button class="nav-btn-l" id="btn-del-all" onclick="confirmDeleteAll()" style="display:none">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-      </button>
       <div class="nav-large">EV Ladetracker</div>
       <div class="nav-sub"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Opel eFrontera</span></div>
       <button class="nav-btn-r" onclick="openSheet()">+</button>
@@ -214,6 +215,15 @@ html,body { height:100%; width:100%; background:var(--bg); color:var(--text); fo
       <button class="settings-save-btn" onclick="saveConfig()">💾 Konfiguration speichern & sync</button>
       <button class="settings-sync-btn" onclick="syncNow()">🔄 Jetzt synchronisieren</button>
 
+      <div class="sec" style="margin-top:8px">Darstellung</div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="theme-opt" id="theme-opt">
+          <button data-v="auto" onclick="setTheme('auto')">Automatisch</button>
+          <button data-v="light" onclick="setTheme('light')">Hell</button>
+          <button data-v="dark" onclick="setTheme('dark')">Dunkel</button>
+        </div>
+      </div>
+
       <div class="sec" style="margin-top:8px">Datenspeicherung</div>
       <div class="card" style="margin-bottom:16px">
         <div class="settings-row"><span class="settings-lbl">Datei im Repo</span><span style="font-size:12px;color:var(--text3);font-family:monospace">data/charges.json</span></div>
@@ -244,7 +254,7 @@ html,body { height:100%; width:100%; background:var(--bg); color:var(--text); fo
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <button class="sheet-btn cancel" onclick="closeSheet()">Abbrechen</button>
-      <span class="sheet-title">Neuer Ladevorgang</span>
+      <span class="sheet-title" id="sheet-title">Neuer Ladevorgang</span>
       <button class="sheet-btn save" onclick="saveEntry()">Speichern</button>
     </div>
     <div class="form-sec">
@@ -307,7 +317,7 @@ const MONTHS_S  = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt',
 const MONTHS_F  = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 
 // ─── State ────────────────────────────────────────────────────────
-let cfg = { user:'marcschneeberger87', repo:'ev-tracker', branch:'main', token:'' };
+let cfg = { user:'marcschneeberger87', repo:'ev-tracker', branch:'main', token:'', theme:'auto' };
 let entries  = [];
 let fileSha  = null;
 let currentTab = 'home';
@@ -319,6 +329,28 @@ function loadConfig() {
   document.getElementById('cfg-repo').value   = cfg.repo;
   document.getElementById('cfg-branch').value = cfg.branch;
   document.getElementById('cfg-token').value  = cfg.token;
+  applyTheme();
+}
+
+function setTheme(v) {
+  cfg.theme = v;
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  applyTheme();
+}
+
+function applyTheme() {
+  const t = cfg.theme || 'auto';
+  const effective = t === 'auto'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : t;
+  document.documentElement.setAttribute('data-theme', effective);
+  document.querySelectorAll('#theme-opt button').forEach(b => b.classList.toggle('on', b.dataset.v === t));
+}
+
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if ((cfg.theme || 'auto') === 'auto') applyTheme();
+  });
 }
 
 function saveConfig() {
@@ -459,7 +491,6 @@ function renderCurrent() {
 
 // ─── HOME ─────────────────────────────────────────────────────────
 function renderHome() {
-  document.getElementById('btn-del-all').style.display = entries.length?'flex':'none';
   const body=document.getElementById('home-body');
   if (!entries.length) {
     body.innerHTML=`<div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Noch keine Ladevorgänge</div><div class="empty-sub">${cfg.token?'Tippe auf + um loszulegen.':'Bitte GitHub Token in den Einstellungen hinterlegen.'}</div>${!cfg.token?`<button class="empty-btn" onclick="showTab('settings',document.querySelectorAll('.tab')[3])">Einstellungen öffnen</button>`:''}</div>`;
@@ -521,7 +552,7 @@ function rowHTMLDel(e) {
   const dc=e.type==='DC';
   const t=e.kwh>0?fmtN(e.cost/e.kwh,3)+' CHF/kWh':'';
   const soc=(e.socStart!=null&&e.socEnd!=null)?`<div class="soc"><span class="soc-n">${e.socStart}%</span><div class="soc-bg"><div class="soc-fill" style="width:${Math.min(100,e.socEnd)}%"></div></div><span class="soc-n r">${e.socEnd}%</span></div>`:'';
-  return `<div class="crow" style="position:relative;padding-right:46px"><div class="crow-icon ${dc?'dc':'ac'}">${dc?'⚡':'🔌'}</div><div class="crow-info"><div class="crow-name">${e.station}</div><div class="crow-meta">${fmtDate(e.date)}<span class="badge ${dc?'badge-dc':'badge-ac'}">${e.type}</span>${t?`<span style="font-size:9.5px;color:var(--text3)">${t}</span>`:''}</div>${soc}</div><div class="crow-right"><div class="crow-chf">${fmtChf(e.cost)}</div><div class="crow-kwh">${fmtN(e.kwh)} kWh</div>${e.km?`<div class="crow-km">${e.km} km</div>`:''}</div><button onclick="deleteEntry('${e.id}')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--red);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1">×</button></div>`;
+  return `<div class="crow" style="position:relative;padding-right:46px;cursor:pointer" onclick="openSheet('${e.id}')"><div class="crow-icon ${dc?'dc':'ac'}">${dc?'⚡':'🔌'}</div><div class="crow-info"><div class="crow-name">${e.station}</div><div class="crow-meta">${fmtDate(e.date)}<span class="badge ${dc?'badge-dc':'badge-ac'}">${e.type}</span>${t?`<span style="font-size:9.5px;color:var(--text3)">${t}</span>`:''}</div>${soc}</div><div class="crow-right"><div class="crow-chf">${fmtChf(e.cost)}</div><div class="crow-kwh">${fmtN(e.kwh)} kWh</div>${e.km?`<div class="crow-km">${e.km} km</div>`:''}</div><button onclick="event.stopPropagation();deleteEntry('${e.id}')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--red);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1">×</button></div>`;
 }
 
 // ─── Charts ───────────────────────────────────────────────────────
@@ -532,15 +563,25 @@ function renderBarChart(id, data, field, color, unit) {
 }
 
 // ─── Sheet ────────────────────────────────────────────────────────
-function openSheet() {
-  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-  ['f-station','f-kwh','f-cost','f-tarif','f-soc-start','f-soc-end','f-km'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('tarif-hint').textContent='';
-  document.getElementById('save-btn').disabled=true;
+let editingId = null;
+
+function openSheet(id) {
+  editingId = id || null;
+  const e = editingId ? entries.find(x=>x.id===editingId) : null;
+  document.getElementById('sheet-title').textContent = e ? 'Ladevorgang bearbeiten' : 'Neuer Ladevorgang';
+  document.getElementById('f-date').value = e ? e.date : new Date().toISOString().split('T')[0];
+  document.getElementById('f-station').value = e ? e.station : '';
+  document.getElementById('f-type').value = e ? e.type : 'AC';
+  document.getElementById('f-kwh').value = e ? e.kwh : '';
+  document.getElementById('f-cost').value = e ? e.cost : '';
+  document.getElementById('f-soc-start').value = e && e.socStart!=null ? e.socStart : '';
+  document.getElementById('f-soc-end').value = e && e.socEnd!=null ? e.socEnd : '';
+  document.getElementById('f-km').value = e && e.km!=null ? e.km : '';
   document.getElementById('station-list').innerHTML=[...new Set(entries.map(e=>e.station))].map(s=>`<option value="${s}">`).join('');
+  calcTarif();
   document.getElementById('sheet').classList.add('open');
 }
-function closeSheet() { document.getElementById('sheet').classList.remove('open'); }
+function closeSheet() { document.getElementById('sheet').classList.remove('open'); editingId = null; }
 function closeSheetOutside(e) { if(e.target===document.getElementById('sheet')) closeSheet(); }
 
 function calcTarif() {
@@ -557,12 +598,24 @@ async function saveEntry() {
   const cost=parseFloat(document.getElementById('f-cost').value);
   const station=document.getElementById('f-station').value.trim();
   if(!station||!kwh||!cost) return;
-  const entry={id:Date.now().toString(),date:document.getElementById('f-date').value,station,type:document.getElementById('f-type').value,kwh,cost,socStart:parseInt(document.getElementById('f-soc-start').value)||null,socEnd:parseInt(document.getElementById('f-soc-end').value)||null,km:parseInt(document.getElementById('f-km').value)||null};
-  entries.unshift(entry); entries.sort((a,b)=>b.date.localeCompare(a.date));
-  closeSheet(); renderHome();
+  const fields={date:document.getElementById('f-date').value,station,type:document.getElementById('f-type').value,kwh,cost,socStart:parseInt(document.getElementById('f-soc-start').value)||null,socEnd:parseInt(document.getElementById('f-soc-end').value)||null,km:parseInt(document.getElementById('f-km').value)||null};
+  let msg;
+  if (editingId) {
+    const idx = entries.findIndex(x=>x.id===editingId);
+    if (idx===-1) return;
+    entries[idx] = { ...entries[idx], ...fields };
+    msg = `Update: ${station} ${fields.date}`;
+  } else {
+    entries.unshift({ id: Date.now().toString(), ...fields });
+    msg = `Add: ${station} ${fields.date}`;
+  }
+  entries.sort((a,b)=>b.date.localeCompare(a.date));
+  const wasEdit = !!editingId;
+  editingId = null;
+  closeSheet(); renderCurrent();
   showSpinner('Speichere auf GitHub…');
-  const ok=await pushToGitHub(`Add: ${station} ${entry.date}`);
-  hideSpinner(); if(ok) showToast('Ladevorgang gespeichert ✓');
+  const ok=await pushToGitHub(msg);
+  hideSpinner(); if(ok) showToast(wasEdit ? 'Ladevorgang aktualisiert ✓' : 'Ladevorgang gespeichert ✓');
 }
 
 // ─── Delete ───────────────────────────────────────────────────────
