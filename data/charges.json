@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "1788002236059",
+      "date": "2026-08-29",
+      "station": "Langnau Campus",
+      "type": "AC",
+      "kwh": 20.2,
+      "cost": 10.09,
+      "socStart": 55,
+      "socEnd": 100,
+      "km": 9160
+    },
+    {
       "id": "1787652452538",
       "date": "2026-08-25",
       "station": "Flyer Huttwil",
