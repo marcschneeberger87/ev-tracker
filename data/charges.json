@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "1794578182144",
+      "date": "2026-11-13",
+      "station": "Flyer Huttwil",
+      "type": "AC",
+      "kwh": 33.47,
+      "cost": 5.69,
+      "socStart": 22,
+      "socEnd": 100,
+      "km": 10759
+    },
+    {
       "id": "1793976975454",
       "date": "2026-11-06",
       "station": "Flyer Huttwil",
